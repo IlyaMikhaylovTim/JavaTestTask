@@ -11,10 +11,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 public class ControllerStartsTest {
 
     @Autowired
-    private TestController controller;
+    private Controller controller;
 
     @Test
-    public void contextLoads() throws Exception {
+    public void controllerStarts() throws Exception {
         assertThat(controller).isNotNull();
     }
 }
