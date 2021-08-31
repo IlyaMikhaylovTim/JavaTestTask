@@ -12,4 +12,5 @@
 
 # Remarks
 
-- Можно добавить еще ООП, реализовав один уровень наследования. Например, классы `FilmInformation`, `CalculatedData` можно унаследовать от более общих предков `ResponseEntity` и `Data`. Такой подход позволит в дальнейшем использовать реализованный код не только для данных-фильмов, но и для других данных.
+- Не очень хороший подход в методе `popularityOfGenre` класса `Controller`, а именно - строчка `return service.getData().getGenreToPopularity().get(genre_id) /
+                service.getData().getGenreToNumberOfFilms().get(genre_id);`. Стоит оформить ее в метод класса `GenresPopularityCalculationService` и вызывать уже этот метод. То же касается и некоторых других методов в классе `Controller`. Исправляю это в новой версии.
