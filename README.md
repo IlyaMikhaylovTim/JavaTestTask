@@ -14,3 +14,5 @@
 
 - Не очень хороший подход в методе `popularityOfGenre` класса `Controller`, а именно - строчка `return service.getData().getGenreToPopularity().get(genre_id) /
                 service.getData().getGenreToNumberOfFilms().get(genre_id);`. Стоит оформить ее в метод класса `GenresPopularityCalculationService` и вызывать уже этот метод. То же касается и некоторых других методов в классе `Controller`. Исправляю это в новой версии.
+                
+- Можно объявить несколько базовых классов, от которых будут наследоваться почти все классы, объявленные в программе, а также переписать код под эти изменения. Данный move может помочь в re-использовании уже написанного кода.
