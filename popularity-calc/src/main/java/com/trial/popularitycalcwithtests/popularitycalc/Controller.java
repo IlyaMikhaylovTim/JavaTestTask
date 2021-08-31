@@ -23,16 +23,15 @@ public class Controller {
     // auxiliary methods
 
     private boolean isValidGenreId(int genreId) {
-        return service.getData().getGenresList().contains(genreId);
+        return service.isValidGenreId(genreId);
     }
 
     private boolean isCalculationFinished() {
-        return service.numberOfProcessedPages() + 1 == service.totalNumberOfPages();
+        return service.isCalculationFinished();
     }
 
     private double popularityOfGenre(int genre_id) {
-        return service.getData().getGenreToPopularity().get(genre_id) /
-                service.getData().getGenreToNumberOfFilms().get(genre_id);
+        return service.popularityOfGenre(genre_id);
     }
 
 
@@ -40,7 +39,8 @@ public class Controller {
 
     @GetMapping(value="/showGenresIds")
     public String showGenresIds() {
-        return "Genres ids: " + service.getData().getGenresList().toString();
+        var genresIds = service.getGenresIds();
+        return "Genres ids: " + genresIds.toString();
     }
 
     @GetMapping(value="/showProcessedPages")

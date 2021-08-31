@@ -5,14 +5,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FilmsInformation {
+public class ListOfFilms {
 
     private int page;
     private List<FilmInformation> results;
 
-    public FilmsInformation() {}
+    public ListOfFilms() {}
 
-    public FilmsInformation(int page, List<FilmInformation> results) {
+    public ListOfFilms(int page, List<FilmInformation> results) {
         this.page = page;
         this.results = results;
     }

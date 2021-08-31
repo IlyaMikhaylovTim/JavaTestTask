@@ -2,13 +2,13 @@ package com.trial.popularitycalcwithtests.popularitycalc;
 
 import java.util.List;
 
-public class GenresInformation {
+public class ListOfGenres {
 
     private List<GenreInformation> genres;
 
-    public GenresInformation() {}
+    public ListOfGenres() {}
 
-    public GenresInformation(List<GenreInformation> lst) {
+    public ListOfGenres(List<GenreInformation> lst) {
         this.genres = lst;
     }
 

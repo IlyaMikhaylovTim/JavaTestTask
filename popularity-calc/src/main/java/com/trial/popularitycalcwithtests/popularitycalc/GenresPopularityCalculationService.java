@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
 
 @Service
 public class GenresPopularityCalculationService {
@@ -27,10 +28,6 @@ public class GenresPopularityCalculationService {
     @Autowired
     private CalculatedData calculatedData;
 
-    public CalculatedData getData() {
-        return calculatedData;
-    }
-
     public GenresPopularityCalculationService(RestTemplateBuilder restTemplateBuilder) {
         this.restTemplate = restTemplateBuilder.build();
     }
@@ -44,7 +41,7 @@ public class GenresPopularityCalculationService {
 
     private void initGenresList() {
         String genresUrl = baseUrl + genresInfoUrl + apiKeyUrl;
-        GenresInformation genresResponse = restTemplate.getForObject(genresUrl, GenresInformation.class);
+        ListOfGenres genresResponse = restTemplate.getForObject(genresUrl, ListOfGenres.class);
 
         for (GenreInformation genreInformation : genresResponse.getGenres()) {
             calculatedData.getGenresList().add(genreInformation.getId());
@@ -63,6 +60,7 @@ public class GenresPopularityCalculationService {
     public int totalNumberOfPages() {
         return calculatedData.getTotalNumberOfPages();
     }
+
     public int numberOfProcessedPages() {
         return calculatedData.getNumberOfProcessedPages();
     }
@@ -71,24 +69,41 @@ public class GenresPopularityCalculationService {
         calculatedData.setNumberOfProcessedPages(calculatedData.getNumberOfProcessedPages() + 1);
     }
 
-    private FilmsInformation getFilmsInfo(String url) {
-        FilmsInformation filmsInformation = null;
+    public boolean isValidGenreId(int genreId) {
+        return calculatedData.getGenresList().contains(genreId);
+    }
+
+    public boolean isCalculationFinished() {
+        return numberOfProcessedPages() + 1 == totalNumberOfPages();
+    }
+
+    public double popularityOfGenre(int genre_id) {
+        return calculatedData.getGenreToPopularity().get(genre_id) /
+                calculatedData.getGenreToNumberOfFilms().get(genre_id);
+    }
+
+    public ArrayList<Integer> getGenresIds() {
+        return calculatedData.getGenresList();
+    }
+
+    private ListOfFilms getFilmsInfo(String url) {
+        ListOfFilms listOfFilms = null;
         int numberOfConnectionTries = 0;
 
         while (numberOfConnectionTries < MAX_NUMBER_OF_CONNECTION_TRIES) {
             try {
-                filmsInformation = restTemplate.getForObject(url, FilmsInformation.class);
+                listOfFilms = restTemplate.getForObject(url, ListOfFilms.class);
                 break;
             } catch (Exception e) {
                 ++numberOfConnectionTries;
             }
         }
 
-        return filmsInformation;
+        return listOfFilms;
     }
 
-    private void updatePopularityAndNumberOfFilms(FilmsInformation filmsInformation) {
-        for (FilmInformation filmInformation : filmsInformation.getResults()) {
+    private void updatePopularityAndNumberOfFilms(ListOfFilms listOfFilms) {
+        for (FilmInformation filmInformation : listOfFilms.getResults()) {
             for (int genre_id : filmInformation.getGenre_ids()) {
                 synchronized(this) {
                     double currentPopularity = calculatedData.getGenreToPopularity().getOrDefault(genre_id, 0.);
@@ -107,16 +122,16 @@ public class GenresPopularityCalculationService {
 
         String filmsUrl = baseUrl + filmsInfoUrl + apiKeyUrl + pageUrl + page;
 
-        FilmsInformation filmsInformation = getFilmsInfo(filmsUrl);
+        ListOfFilms listOfFilms = getFilmsInfo(filmsUrl);
 
-        if (filmsInformation == null) {
+        if (listOfFilms == null) {
             logger.info("Failed to get page " + page + " from the server");
             return;
         }
 
         synchronized (this) {
             increaseNumberOfProcessedPages();
-            updatePopularityAndNumberOfFilms(filmsInformation);
+            updatePopularityAndNumberOfFilms(listOfFilms);
         }
 
         logger.info("Prossed page " + page + " on server");
