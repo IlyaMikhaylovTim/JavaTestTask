@@ -6,35 +6,35 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 
 @Service
-public class GenresPopularityCalculationService {
+public class GenresPopularityCalculationService extends BaseService {
 
     private static final Logger logger = LoggerFactory.getLogger(GenresPopularityCalculationService.class);
+
     private final int MAX_NUMBER_OF_CONNECTION_TRIES = 10;
 
-    private RestTemplate restTemplate;
-    private String baseUrl = "https://easy.test-assignment-a.loyaltyplant.net";
-    private String genresInfoUrl = "/3/genre/movie/list";
-    private String filmsInfoUrl = "/3/discover/movie";
-    private String apiKeyUrl = "?api_key=72b56103e43843412a992a8d64bf96e9";
-    private String pageUrl = "&page=";
+    private final String baseUrl = "https://easy.test-assignment-a.loyaltyplant.net";
+    private final String genresInfoUrl = "/3/genre/movie/list";
+    private final String filmsInfoUrl = "/3/discover/movie";
+    private final String apiKeyUrl = "?api_key=72b56103e43843412a992a8d64bf96e9";
+    private final String pageUrl = "&page=";
 
 
     @Autowired
-    private CalculatedData calculatedData;
+    private Data calculatedData;
 
     public GenresPopularityCalculationService(RestTemplateBuilder restTemplateBuilder) {
-        this.restTemplate = restTemplateBuilder.build();
+        super(restTemplateBuilder);
     }
 
 
     @PostConstruct
-    private void initService() {
+    @Override
+    protected void initService() {
         initGenresList();
         initTotalNumberOfPages();
     }
@@ -51,8 +51,9 @@ public class GenresPopularityCalculationService {
 
     private void initTotalNumberOfPages() {
         String filmsUrl = baseUrl + filmsInfoUrl + apiKeyUrl + pageUrl + 1;
-        TotalNumberOfPages numberOfPagesResponse = restTemplate.getForObject(filmsUrl, TotalNumberOfPages.class);
-        calculatedData.setTotalNumberOfPages(numberOfPagesResponse.getTotal_pages());
+//        TotalNumberOfPages numberOfPagesResponse = restTemplate.getForObject(filmsUrl, TotalNumberOfPages.class);
+//        calculatedData.setTotalNumberOfPages(numberOfPagesResponse.getTotal_pages());
+        calculatedData.setTotalNumberOfPages(20);
 
     }
 
@@ -77,16 +78,17 @@ public class GenresPopularityCalculationService {
         return numberOfProcessedPages() + 1 == totalNumberOfPages();
     }
 
-    public double popularityOfGenre(int genre_id) {
-        return calculatedData.getGenreToPopularity().get(genre_id) /
-                calculatedData.getGenreToNumberOfFilms().get(genre_id);
+    public double popularityOfGenre(int genreId) {
+        return calculatedData.getGenreToPopularity().get(genreId) /
+                calculatedData.getGenreToNumberOfFilms().get(genreId);
     }
 
-    public ArrayList<Integer> getGenresIds() {
+    public ArrayList<Integer> genresIds() {
         return calculatedData.getGenresList();
     }
 
-    private ListOfFilms getFilmsInfo(String url) {
+
+    private ListOfFilms retrieveFilmsInfo(String url) {
         ListOfFilms listOfFilms = null;
         int numberOfConnectionTries = 0;
 
@@ -104,25 +106,23 @@ public class GenresPopularityCalculationService {
 
     private void updatePopularityAndNumberOfFilms(ListOfFilms listOfFilms) {
         for (FilmInformation filmInformation : listOfFilms.getResults()) {
-            for (int genre_id : filmInformation.getGenre_ids()) {
-                synchronized(this) {
-                    double currentPopularity = calculatedData.getGenreToPopularity().getOrDefault(genre_id, 0.);
-                    calculatedData.getGenreToPopularity().put(genre_id, currentPopularity + filmInformation.getVote_average());
+            for (int genreId : filmInformation.getGenre_ids()) {
+                double currentPopularity = calculatedData.getGenreToPopularity().getOrDefault(genreId, 0.);
+                calculatedData.getGenreToPopularity().put(genreId, currentPopularity + filmInformation.getVote_average());
 
-                    int currentNumberOfFilms = calculatedData.getGenreToNumberOfFilms().getOrDefault(genre_id, 0);
-                    calculatedData.getGenreToNumberOfFilms().put(genre_id, currentNumberOfFilms + 1);
-                }
+                int currentNumberOfFilms = calculatedData.getGenreToNumberOfFilms().getOrDefault(genreId, 0);
+                calculatedData.getGenreToNumberOfFilms().put(genreId, currentNumberOfFilms + 1);
             }
         }
     }
 
 
     @Async
-    public void getFilmsInfoFromPageAndUpdateData(int page) throws InterruptedException {
+    public void getFilmsInfoAndUpdateData(int page) throws InterruptedException {
 
         String filmsUrl = baseUrl + filmsInfoUrl + apiKeyUrl + pageUrl + page;
 
-        ListOfFilms listOfFilms = getFilmsInfo(filmsUrl);
+        ListOfFilms listOfFilms = retrieveFilmsInfo(filmsUrl);
 
         if (listOfFilms == null) {
             logger.info("Failed to get page " + page + " from the server");
@@ -130,11 +130,11 @@ public class GenresPopularityCalculationService {
         }
 
         synchronized (this) {
-            increaseNumberOfProcessedPages();
             updatePopularityAndNumberOfFilms(listOfFilms);
+            increaseNumberOfProcessedPages();
         }
 
-        logger.info("Prossed page " + page + " on server");
+        logger.info("Processed page " + page + " on server");
 
     }
 

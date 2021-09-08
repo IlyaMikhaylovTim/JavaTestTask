@@ -10,9 +10,12 @@ public class FilmInformation {
     private double vote_average;
     private List<Integer> genre_ids;
 
-    public FilmInformation() {}
+    public FilmInformation() {
+        super();
+    }
 
     public FilmInformation(double vote_average, List<Integer> genre_ids) {
+        super();
         this.vote_average = vote_average;
         this.genre_ids = genre_ids;
     }

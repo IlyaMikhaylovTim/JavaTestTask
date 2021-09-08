@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/")
@@ -14,8 +15,8 @@ public class Controller {
 
     @PostConstruct
     public void startCalculation() throws InterruptedException {
-        for (int i = 1; i < service.totalNumberOfPages(); ++i) {
-            service.getFilmsInfoFromPageAndUpdateData(i);
+        for (int page = 1; page < totalNumberOfPages(); ++page) {
+            service.getFilmsInfoAndUpdateData(page);
         }
     }
 
@@ -34,22 +35,30 @@ public class Controller {
         return service.popularityOfGenre(genre_id);
     }
 
+    private ArrayList<Integer> genresIds() {
+        return service.genresIds();
+    }
+
+    private int totalNumberOfPages() {
+        return service.totalNumberOfPages();
+    }
+
+    private int numberOfProcessedPages() {
+        return service.numberOfProcessedPages();
+    }
+
 
     // URI-handling methods
 
     @GetMapping(value="/showGenresIds")
     public String showGenresIds() {
-        var genresIds = service.getGenresIds();
-        return "Genres ids: " + genresIds.toString();
+        return "Genres ids: " + genresIds().toString();
     }
 
     @GetMapping(value="/showProcessedPages")
     public String showProcessedPages() {
-        int totalNumberOfPages = service.totalNumberOfPages();
-        int numberOfProcessedPages = service.numberOfProcessedPages();
-
-        return numberOfProcessedPages + " of "
-                + totalNumberOfPages + " pages were processed";
+        return numberOfProcessedPages() + " of "
+                + totalNumberOfPages() + " pages were processed";
     }
 
     @GetMapping(value="/showGenrePopularity/{genreId}")
