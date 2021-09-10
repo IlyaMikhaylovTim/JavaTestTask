@@ -51,9 +51,8 @@ public class GenresPopularityCalculationService extends BaseService {
 
     private void initTotalNumberOfPages() {
         String filmsUrl = baseUrl + filmsInfoUrl + apiKeyUrl + pageUrl + 1;
-//        TotalNumberOfPages numberOfPagesResponse = restTemplate.getForObject(filmsUrl, TotalNumberOfPages.class);
-//        calculatedData.setTotalNumberOfPages(numberOfPagesResponse.getTotal_pages());
-        calculatedData.setTotalNumberOfPages(20);
+        TotalNumberOfPages numberOfPagesResponse = restTemplate.getForObject(filmsUrl, TotalNumberOfPages.class);
+        calculatedData.setTotalNumberOfPages(numberOfPagesResponse.getTotal_pages());
 
     }
 
